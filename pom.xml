@@ -1,7 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <name>Algorithms</name>
@@ -9,119 +7,119 @@
   <artifactId>algorithms</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
+
+  <url>http://maven.apache.org</url>
+
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <maven.compiler.source>8</maven.compiler.source>
+      <maven.compiler.target>8</maven.compiler.target>
+      <evosuite.version>1.0.6</evosuite.version>
   </properties>
 
   <dependencies>
     <dependency>
-            <groupId>org.pitest</groupId>
-            <artifactId>pitest-maven</artifactId>
-            <version>1.20.4</version>
+        <groupId>org.jmockit</groupId>
+        <artifactId>jmockit</artifactId>
+        <version>1.49</version>
+        <scope>test</scope>
     </dependency>
-    
-    <dependency>
+     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-            <groupId>org.evosuite</groupId>
-            <artifactId>evosuite-standalone-runtime</artifactId>
-            <version>1.0.6</version>
-            <scope>test</scope>
-        </dependency>
+      <groupId>org.evosuite</groupId>
+      <artifactId>evosuite-standalone-runtime</artifactId>
+      <version>${evosuite.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency> <!-- For the sake of having a dependency -->
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
+      <version>3.2.2</version>
+    </dependency>
   </dependencies>
 
   <build>
-    <plugins>
-        <plugin>
-          <groupId>org.evosuite.plugins</groupId>
-          <artifactId>evosuite-maven-plugin</artifactId>
-          <version>1.0.6</version>
-          <configuration>
-              <memoryInMB>5000</memoryInMB>
-              <cores>1</cores>
-              <spawn_process_manager_port>50000</spawn_process_manager_port>
-          </configuration>
-          <executions>
-              <execution>
-                  <goals>
-                      <goal>prepare</goal>
-                  </goals>
-                  <phase>process-test-classes</phase>
-              </execution>
-          </executions>
-      </plugin>
-          <plugin>
-              <groupId>org.jacoco</groupId>
-              <artifactId>jacoco-maven-plugin</artifactId>
-              <version>0.8.11</version>
-              <executions>
-                  <execution>
-                      <goals>
-                          <goal>prepare-agent</goal>
-                      </goals>
-                  </execution>
-                  <execution>
-                      <id>report</id>
-                      <phase>test</phase>
-                      <goals>
-                          <goal>report</goal>
-                      </goals>
-                  </execution>
-              </executions>
-          </plugin>
-          <plugin>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.9.6.0</version>
-                <configuration>
-                    <effort>Max</effort>
-                    <threshold>Low</threshold>
-                    <xmlOutput>true</xmlOutput>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.github.spotbugs</groupId>
-                        <artifactId>spotbugs</artifactId>
-                        <version>4.9.3</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-      </plugins>
-    <pluginManagement>
-      <plugins>
-        
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.10</version>
-          <configuration>
-            <failsOnError>true</failsOnError>
-            <consoleOutput>true</consoleOutput>
-            <configLocation>checkstyle.xml</configLocation>
-          </configuration>
-          <executions>
-            <execution>
-              <phase>compile</phase>
-              <goals>
-                <goal>checkstyle</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
-  <pluginRepositories>
-        <pluginRepository>
-            <id>EvoSuite</id>
-            <name>EvoSuite Repository</name>
-            <url>http://www.evosuite.org/m2</url>
-        </pluginRepository>
-    </pluginRepositories>
     
+
+    <plugins>
+    <plugin>
+      <groupId>org.pitest</groupId>
+      <artifactId>pitest-maven</artifactId>
+      <version>1.14.0</version> <!-- Use latest stable version -->
+      <configuration>
+        <targetClasses>
+          <param>com.github.pedrovgs.*</param>
+        </targetClasses>
+        <targetTests>
+          <param>com.github.pedrovgs.*</param>
+        </targetTests>
+      </configuration>
+    </plugin>
+
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>3.1.12</version>
+      </plugin>
+
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.7</version> <!-- Use latest version if possible -->
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.evosuite.plugins</groupId>
+        <artifactId>evosuite-maven-plugin</artifactId>
+        <version>${evosuite.version}</version>
+        <executions>
+          <!-- prepares the runtime listener so EvoSuite tests run with surefire -->
+          <execution>
+            <goals><goal>prepare</goal></goals>
+            <phase>process-test-classes</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.2</version>
+        <configuration>
+          <properties>
+            <property>
+              <name>listener</name>
+              <value>org.evosuite.runtime.InitializingListener</value>
+            </property>
+          </properties>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>EvoSuite</id>
+      <name>EvoSuite Repository</name>
+      <url>http://www.evosuite.org/m2</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
