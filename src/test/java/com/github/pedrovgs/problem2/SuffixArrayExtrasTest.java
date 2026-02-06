@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.pedrovgs.algs.problem52;
+package com.github.pedrovgs.problem2;
 
 import org.junit.Test;
 
