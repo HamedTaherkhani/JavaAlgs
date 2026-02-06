@@ -33,10 +33,37 @@ public class AhoCorasickAdvanced {
   private final List<Node> nodes = new ArrayList<Node>();
   private final List<Pattern> patterns = new ArrayList<Pattern>();
   private boolean built;
+  private boolean strictValidation;
+  private boolean caseInsensitive;
+  private boolean normalizeWhitespace;
 
   public AhoCorasickAdvanced() {
     nodes.add(new Node());
     nodes.get(0).fail = 0;
+  }
+
+  /**
+   * Enables extra validation and error paths. Default is false.
+   */
+  public void setStrictValidation(boolean strictValidation) {
+    ensureNotBuilt("change validation settings");
+    this.strictValidation = strictValidation;
+  }
+
+  /**
+   * Enables case-insensitive matching. Default is false.
+   */
+  public void setCaseInsensitive(boolean caseInsensitive) {
+    ensureNotBuilt("change case sensitivity");
+    this.caseInsensitive = caseInsensitive;
+  }
+
+  /**
+   * Enables whitespace normalization (all whitespace becomes a single space). Default is false.
+   */
+  public void setNormalizeWhitespace(boolean normalizeWhitespace) {
+    ensureNotBuilt("change whitespace normalization");
+    this.normalizeWhitespace = normalizeWhitespace;
   }
 
   public int addPattern(String pattern, int weight) {
@@ -46,9 +73,19 @@ public class AhoCorasickAdvanced {
     if (built) {
       throw new IllegalStateException("Cannot add patterns after build().");
     }
+    if (strictValidation && pattern.length() == 0) {
+      throw new IllegalArgumentException("Pattern can't be empty when strict validation is enabled.");
+    }
+    if (strictValidation && weight == 0) {
+      throw new IllegalArgumentException("Pattern weight can't be zero when strict validation is enabled.");
+    }
+    if (strictValidation && weight < 0) {
+      throw new IllegalArgumentException("Pattern weight can't be negative when strict validation is enabled.");
+    }
+    String normalizedPattern = normalizePattern(pattern);
     int current = 0;
-    for (int i = 0; i < pattern.length(); i++) {
-      char ch = pattern.charAt(i);
+    for (int i = 0; i < normalizedPattern.length(); i++) {
+      char ch = normalizedPattern.charAt(i);
       Integer next = nodes.get(current).next.get(ch);
       if (next == null) {
         next = nodes.size();
@@ -58,12 +95,18 @@ public class AhoCorasickAdvanced {
       current = next;
     }
     int id = patterns.size();
-    patterns.add(new Pattern(pattern, weight));
+    patterns.add(new Pattern(normalizedPattern, weight));
     nodes.get(current).output.add(id);
     return id;
   }
 
   public void build() {
+    if (built) {
+      throw new IllegalStateException("build() has already been called.");
+    }
+    if (strictValidation && patterns.isEmpty()) {
+      throw new IllegalStateException("At least one pattern is required when strict validation is enabled.");
+    }
     Queue<Integer> q = new ArrayDeque<Integer>();
     for (Map.Entry<Character, Integer> e : nodes.get(0).next.entrySet()) {
       int v = e.getValue();
@@ -94,22 +137,12 @@ public class AhoCorasickAdvanced {
   }
 
   public int[] countOccurrencesByPattern(String text) {
-    if (!built) {
-      throw new IllegalStateException("build() must be called before search().");
-    }
-    if (text == null) {
-      throw new IllegalArgumentException("Text can't be null.");
-    }
+    ensureBuiltForSearch();
+    validateText(text);
     int[] counts = new int[patterns.size()];
     int state = 0;
     for (int i = 0; i < text.length(); i++) {
-      char ch = text.charAt(i);
-      while (state != 0 && !nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).fail;
-      }
-      if (nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).next.get(ch);
-      }
+      state = advanceState(state, text.charAt(i));
       for (int id : nodes.get(state).output) {
         counts[id]++;
       }
@@ -118,22 +151,12 @@ public class AhoCorasickAdvanced {
   }
 
   public long scoreMatches(String text) {
-    if (!built) {
-      throw new IllegalStateException("build() must be called before search().");
-    }
-    if (text == null) {
-      throw new IllegalArgumentException("Text can't be null.");
-    }
+    ensureBuiltForSearch();
+    validateText(text);
     long score = 0;
     int state = 0;
     for (int i = 0; i < text.length(); i++) {
-      char ch = text.charAt(i);
-      while (state != 0 && !nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).fail;
-      }
-      if (nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).next.get(ch);
-      }
+      state = advanceState(state, text.charAt(i));
       for (int id : nodes.get(state).output) {
         score += patterns.get(id).weight;
       }
@@ -146,12 +169,8 @@ public class AhoCorasickAdvanced {
   }
 
   public List<Match> searchAll(String text, int limit) {
-    if (!built) {
-      throw new IllegalStateException("build() must be called before search().");
-    }
-    if (text == null) {
-      throw new IllegalArgumentException("Text can't be null.");
-    }
+    ensureBuiltForSearch();
+    validateText(text);
     if (limit < 0) {
       throw new IllegalArgumentException("Limit must be non-negative.");
     }
@@ -159,18 +178,15 @@ public class AhoCorasickAdvanced {
       return Collections.emptyList();
     }
     if (patterns.isEmpty()) {
+      if (strictValidation) {
+        throw new IllegalStateException("No patterns available for search under strict validation.");
+      }
       return Collections.emptyList();
     }
     List<Match> matches = new ArrayList<Match>();
     int state = 0;
     for (int i = 0; i < text.length(); i++) {
-      char ch = text.charAt(i);
-      while (state != 0 && !nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).fail;
-      }
-      if (nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).next.get(ch);
-      }
+      state = advanceState(state, text.charAt(i));
       for (int id : nodes.get(state).output) {
         Pattern p = patterns.get(id);
         int start = i - p.length + 1;
@@ -189,22 +205,12 @@ public class AhoCorasickAdvanced {
   }
 
   public Match findLongestMatch(String text) {
-    if (!built) {
-      throw new IllegalStateException("build() must be called before search().");
-    }
-    if (text == null) {
-      throw new IllegalArgumentException("Text can't be null.");
-    }
+    ensureBuiltForSearch();
+    validateText(text);
     int state = 0;
     Match best = null;
     for (int i = 0; i < text.length(); i++) {
-      char ch = text.charAt(i);
-      while (state != 0 && !nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).fail;
-      }
-      if (nodes.get(state).next.containsKey(ch)) {
-        state = nodes.get(state).next.get(ch);
-      }
+      state = advanceState(state, text.charAt(i));
       for (int id : nodes.get(state).output) {
         Pattern p = patterns.get(id);
         int start = i - p.length + 1;
@@ -259,6 +265,60 @@ public class AhoCorasickAdvanced {
     }
     Collections.reverse(result);
     return result;
+  }
+
+  private void ensureNotBuilt(String action) {
+    if (built) {
+      throw new IllegalStateException("Cannot " + action + " after build().");
+    }
+  }
+
+  private void ensureBuiltForSearch() {
+    if (!built) {
+      throw new IllegalStateException("build() must be called before search().");
+    }
+  }
+
+  private void validateText(String text) {
+    if (text == null) {
+      throw new IllegalArgumentException("Text can't be null.");
+    }
+    if (strictValidation && text.length() == 0) {
+      throw new IllegalArgumentException("Text can't be empty when strict validation is enabled.");
+    }
+  }
+
+  private String normalizePattern(String pattern) {
+    if (!caseInsensitive && !normalizeWhitespace) {
+      return pattern;
+    }
+    StringBuilder sb = new StringBuilder(pattern.length());
+    for (int i = 0; i < pattern.length(); i++) {
+      sb.append(normalizeChar(pattern.charAt(i)));
+    }
+    return sb.toString();
+  }
+
+  private char normalizeChar(char ch) {
+    char normalized = ch;
+    if (caseInsensitive) {
+      normalized = Character.toLowerCase(normalized);
+    }
+    if (normalizeWhitespace && Character.isWhitespace(normalized)) {
+      normalized = ' ';
+    }
+    return normalized;
+  }
+
+  private int advanceState(int state, char rawChar) {
+    char ch = normalizeChar(rawChar);
+    while (state != 0 && !nodes.get(state).next.containsKey(ch)) {
+      state = nodes.get(state).fail;
+    }
+    if (nodes.get(state).next.containsKey(ch)) {
+      state = nodes.get(state).next.get(ch);
+    }
+    return state;
   }
 
   private int findPrevNonOverlapping(List<Match> matches, int idx) {

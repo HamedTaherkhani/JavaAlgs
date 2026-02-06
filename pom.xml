@@ -53,10 +53,10 @@
       <version>1.14.0</version> <!-- Use latest stable version -->
       <configuration>
         <targetClasses>
-          <param>com.github.pedrovgs.*</param>
+          <param>com.github.pedrovgs.algs.*</param>
         </targetClasses>
         <targetTests>
-          <param>com.github.pedrovgs.*</param>
+          <param>com.github.pedrovgs.algs.*</param>
         </targetTests>
       </configuration>
     </plugin>
