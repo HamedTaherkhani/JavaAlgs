@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.pedrovgs.problem1;
+package com.github.pedrovgs.mincostmaxflow;
 
-import com.github.pedrovgs.pair.Pair;
+import com.github.pedrovgs.mincostmaxflow.Pair;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

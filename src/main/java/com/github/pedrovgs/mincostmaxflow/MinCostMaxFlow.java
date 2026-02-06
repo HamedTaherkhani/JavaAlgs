@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.pedrovgs.problem1;
+package com.github.pedrovgs.mincostmaxflow;
 
-import com.github.pedrovgs.pair.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

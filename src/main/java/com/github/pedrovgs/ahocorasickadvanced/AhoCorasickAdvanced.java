@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.pedrovgs.problem3;
+package com.github.pedrovgs.ahocorasickadvanced;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
